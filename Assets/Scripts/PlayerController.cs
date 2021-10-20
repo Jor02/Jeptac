@@ -9,16 +9,24 @@ public class PlayerController : MonoBehaviour
     public Transform spriteTransform;
 
     [Header("Gameplay")]
+    public float standUpSpeed = 10;
+    [Space(10)]
     public float speed = 1;
     public float rotationSpeed = 10;
-    public float pathFollowSpeed = 10;
+    [Space(10)]
+    public float pathFollowSpeed = 50;
+    public float pathLaunchSpeed = 70;
     public float pathInterval = 10;
+    [Space(10)]
+    public Collider2D pathDrawerCol;
     public Vector3 pathStartOffset;
+    [Space(5)]
     public LayerMask groundMask;
 
     [Header("Particles/Effects")]
     public PathDrawer pathDrawer;
     public GameObject smokePrefab;
+    public ParticleSystem smokeTrail;
     private SmokeEffect smokeEffect;
 
     /* private fields */
@@ -26,13 +34,18 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D rb;
     private bool isGrounded = false;
     private bool isStanding = false;
+    private bool isFalling = false;
     private bool isLaunching;
+    private bool shouldLaunch = false;
     private ContactFilter2D contactFilter = new ContactFilter2D();
+
+    private float standingTimer = 1;
 
     private float pathTimer = 0;
     private List<Vector3> targetPath = new List<Vector3>();
 
     private bool shouldFollowPath = false;
+    private float nextAngle = 0;
     private Vector3 prevPoint = Vector3.negativeInfinity;
     private Vector3 nextPoint = Vector3.negativeInfinity;
     private float pointTimer = 0;
@@ -49,11 +62,28 @@ public class PlayerController : MonoBehaviour
     {
         CheckGrounded();
 
-        isStanding = isGrounded; // Needs to change
+        //Make player stand up
+        if (isGrounded)
+        {
+            if (rb.velocity.magnitude <= 0.1f)
+            {
+                if (standingTimer <= 0) {
+                    standingTimer = 1;
+                    isStanding = true; 
+                }
+                else standingTimer -= Time.deltaTime * standUpSpeed;
+            }
+            else standingTimer = 1;
+        }
+        else isStanding = false;
+
+        if (isStanding) isFalling = false;
 
         if (isStanding)
         {
-            if (Input.GetKey(KeyCode.Space))
+            transform.rotation = Quaternion.identity;
+
+            if (Input.GetKey(KeyCode.Space) && !shouldLaunch)
             {
                 if (!isLaunching) //Using this instead of Input.GetKeyDown to prevent input not registering
                 {
@@ -88,17 +118,24 @@ public class PlayerController : MonoBehaviour
                         pathTimer = 1;
                         targetPath.Add(pathDrawer.transform.position);
                     }
+
+                    if (pathDrawerCol.Cast(pathDrawer.transform.up, contactFilter, new RaycastHit2D[1], 0.03f) > 0)
+                    {
+                        shouldLaunch = true;
+                    }
                 }
             }
             else if (isLaunching)
             {
                 isLaunching = false;
+                shouldLaunch = false;
+
+                smokeTrail.Play(true);
 
                 shouldFollowPath = true;
                 pointTimer = 0;
 
                 rb.bodyType = RigidbodyType2D.Static;
-                targetPath.Add(pathDrawer.transform.position);
 
                 //Effects
                 DestroySmoke();
@@ -115,20 +152,34 @@ public class PlayerController : MonoBehaviour
                     pointTimer = 1f;
                     nextPoint = targetPath[0];
                     prevPoint = transform.position;
+
+                    Vector2 pointOffset = nextPoint - prevPoint;
+                    nextAngle = Mathf.Atan2(pointOffset.y, pointOffset.x) * Mathf.Rad2Deg;
+
                     targetPath.RemoveAt(0);
                 }
                 else
                 {
                     shouldFollowPath = false;
                     rb.bodyType = RigidbodyType2D.Dynamic;
+
                     Vector3 angle = (nextPoint - prevPoint).normalized;
-                    rb.AddForce(angle * pathFollowSpeed * 4);
+                    rb.AddForce(angle * pathLaunchSpeed * 4);
+
                     anim.SetTrigger("isFalling");
+                    smokeTrail.Stop(true, ParticleSystemStopBehavior.StopEmitting);
                 }
             }
 
             pointTimer -= Time.deltaTime * pathFollowSpeed;
-            transform.position = Vector3.Lerp(prevPoint, nextPoint, 1 - pointTimer);
+
+            //Lerp to next point
+            Vector3 newPos = Vector3.Lerp(prevPoint, nextPoint, 1 - pointTimer);
+            newPos.z = transform.position.z;
+            transform.position = newPos;
+
+            //Rotate to next point
+            transform.rotation = Quaternion.Euler(0, 0, nextAngle - 90);
         }
 
         SetAnims();
@@ -136,7 +187,7 @@ public class PlayerController : MonoBehaviour
 
     void CheckGrounded()
     {
-        isGrounded = boxCol.Cast(-transform.up, contactFilter, new RaycastHit2D[1], 0.03f) > 0;
+        isGrounded = shouldFollowPath ? false : boxCol.Cast(Vector3.down, contactFilter, new RaycastHit2D[1], 0.03f) > 0;
     }
 
     void SetAnims()
@@ -146,11 +197,27 @@ public class PlayerController : MonoBehaviour
         anim.SetBool("isStanding", isStanding);
         anim.SetBool("isGrounded", isGrounded);
 
-        //Rotate player towards our current velocity
-        Vector3 curRot = spriteTransform.rotation.eulerAngles;
-        Vector2 normalizedVel = rb.velocity.normalized;
-        curRot.z = Mathf.Atan2(normalizedVel.x, normalizedVel.y) * Mathf.Rad2Deg;
-        spriteTransform.rotation = Quaternion.Euler(curRot);
+        if (!shouldFollowPath) {
+            if (!isStanding && !isFalling)
+            {
+                spriteTransform.localRotation = Quaternion.identity;
+                /*
+                //Rotate player towards our current velocity
+                Vector3 curRot = spriteTransform.rotation.eulerAngles;
+                curRot.z = Mathf.Atan2(rb.velocity.x, rb.velocity.y) * Mathf.Rad2Deg;
+                spriteTransform.rotation = Quaternion.Euler(curRot);
+                */
+            } else if (!isFalling)
+            {
+                spriteTransform.rotation = Quaternion.identity;
+            } else
+            {
+                spriteTransform.localRotation = Quaternion.identity;
+            }
+        } else
+        {
+            spriteTransform.localRotation = Quaternion.identity;
+        }
     }
 
     void CreateSmoke()
@@ -171,7 +238,10 @@ public class PlayerController : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        foreach(Vector3 point in targetPath)
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(prevPoint, nextPoint);
+
+        foreach (Vector3 point in targetPath)
         {
             Gizmos.color = Color.red;
             Gizmos.DrawSphere(point, 0.01f);

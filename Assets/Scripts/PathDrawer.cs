@@ -11,7 +11,6 @@ public class PathDrawer : MonoBehaviour
     public SpriteRenderer mainDot;
     public ParticleSystem dotParticle;
 
-    bool prev = false;
     ParticleSystem.MainModule main;
 
     private bool isPlaying = false;
