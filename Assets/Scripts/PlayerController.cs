@@ -14,9 +14,12 @@ public class PlayerController : MonoBehaviour
     public float speed = 1;
     public float rotationSpeed = 10;
     [Space(10)]
+    public float pathLengthTimerLength = 1f;
     public float pathFollowSpeed = 50;
     public float pathLaunchSpeed = 70;
     public float pathInterval = 10;
+    [Space(10)]
+    public ObjectShake cameraShake;
     [Space(10)]
     public Collider2D pathDrawerCol;
     public Vector3 pathStartOffset;
@@ -40,6 +43,7 @@ public class PlayerController : MonoBehaviour
     private ContactFilter2D contactFilter = new ContactFilter2D();
 
     private float standingTimer = 1;
+    private float pathLengthTimer = 1;
 
     private float pathTimer = 0;
     private List<Vector3> targetPath = new List<Vector3>();
@@ -96,9 +100,13 @@ public class PlayerController : MonoBehaviour
                     pathDrawer.transform.position = transform.position + offset;
                     pathDrawer.transform.up = transform.up;
 
+                    pathLengthTimer = pathLengthTimerLength;
+
                     //Effects
                     CreateSmoke();
                     pathDrawer.StartCurve();
+
+                    cameraShake.StartShake(25, 4);
                 }
                 else
                 {
@@ -111,6 +119,8 @@ public class PlayerController : MonoBehaviour
 
                     pathDrawer.transform.position += pathDrawer.transform.up * speed * Time.deltaTime;
 
+                    pathLengthTimer -= Time.deltaTime;
+
                     //Add point to path
                     pathTimer -= Time.deltaTime * pathInterval;
                     if (pathTimer <= 0)
@@ -119,7 +129,7 @@ public class PlayerController : MonoBehaviour
                         targetPath.Add(pathDrawer.transform.position);
                     }
 
-                    if (pathDrawerCol.Cast(pathDrawer.transform.up, contactFilter, new RaycastHit2D[1], 0.03f) > 0)
+                    if (pathLengthTimer <= 0 || pathDrawerCol.Cast(pathDrawer.transform.up, contactFilter, new RaycastHit2D[1], 0.03f) > 0)
                     {
                         shouldLaunch = true;
                     }
@@ -140,6 +150,8 @@ public class PlayerController : MonoBehaviour
                 //Effects
                 DestroySmoke();
                 pathDrawer.StopCurve();
+
+                cameraShake.StopShake();
             }
         }
 
