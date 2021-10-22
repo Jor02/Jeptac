@@ -123,6 +123,19 @@ public class PlayerController : MonoBehaviour
                 OnLaunchEnd();
             }
         }
+        else if (isLaunching) //If falling while holding space
+        {
+            isLaunching = false;
+            shouldLaunch = false;
+
+            DestroySmoke();
+            pathDrawer.StopCurve();
+            cameraShake.StopShake();
+
+            anim.SetTrigger("pathEnd");
+
+            launchingSound.Stop();
+        }
 
         if (shouldFollowPath)
         {
