@@ -34,6 +34,7 @@ public class PlayerController : MonoBehaviour
     public float colliderStandingOffset = 0.5623506f;
 
     [Header("Particles/Effects")]
+    public Transform lineSimulationSpace;
     public PathDrawer pathDrawer;
     public GameObject smokePrefab;
     public ParticleSystem smokeTrail;
@@ -59,6 +60,10 @@ public class PlayerController : MonoBehaviour
 
     private bool isLaunching;
     private bool shouldLaunch = false;
+
+    private Vector3 pathStartPos;
+    private Vector3 launchStartPos;
+
     private ContactFilter2D contactFilter = new ContactFilter2D();
 
     private float standingTimer = 1;
@@ -144,7 +149,8 @@ public class PlayerController : MonoBehaviour
                 if (targetPath.Count > 0)
                 {
                     pointTimer = 1f;
-                    nextPoint = targetPath[0];
+
+                    nextPoint = targetPath[0] + launchStartPos;
                     prevPoint = transform.position;
 
                     Vector2 pointOffset = nextPoint - prevPoint;
@@ -178,6 +184,7 @@ public class PlayerController : MonoBehaviour
             //Rotate to next point
             transform.rotation = Quaternion.Euler(0, 0, nextAngle - 90);
         }
+        else lineSimulationSpace.position = transform.position;
 
         SetAnims();
     }
@@ -192,6 +199,8 @@ public class PlayerController : MonoBehaviour
 
         pathTimer = 0;
         targetPath.Clear();
+        pathStartPos = transform.position;
+
         Quaternion rot = Quaternion.AngleAxis(transform.eulerAngles.z, Vector3.up);
         Vector3 offset = rot * pathStartOffset;
         pathDrawer.transform.position = transform.position + offset;
@@ -230,7 +239,7 @@ public class PlayerController : MonoBehaviour
         if (pathTimer <= 0)
         {
             pathTimer = 1;
-            targetPath.Add(pathDrawer.transform.position);
+            targetPath.Add(pathDrawer.transform.position - pathStartPos);
         }
 
         if (pathLengthTimer <= 0 || pathDrawerCol.Cast(pathDrawer.transform.up, contactFilter, new RaycastHit2D[1], 0.03f) > 0)
@@ -249,19 +258,24 @@ public class PlayerController : MonoBehaviour
 
         smokeTrail.Play(true);
 
-        shouldFollowPath = true;
-        pointTimer = 0;
+        if (targetPath.Count > 0)
+        {
+            shouldFollowPath = true;
+            pointTimer = 0;
 
-        rb.bodyType = RigidbodyType2D.Static;
+            rb.bodyType = RigidbodyType2D.Static;
+
+            launchStartPos = transform.position;
+
+            boxCol.size = new Vector2(boxCol.size.x, colliderFallingHeight);
+            boxCol.offset = new Vector2(boxCol.offset.x, colliderFallingOffset);
+        }
 
         //Effects
         DestroySmoke();
         pathDrawer.StopCurve();
 
         cameraShake.StopShake();
-
-        boxCol.size = new Vector2(boxCol.size.x, colliderFallingHeight);
-        boxCol.offset = new Vector2(boxCol.offset.x, colliderFallingOffset);
     }
     #endregion
 
