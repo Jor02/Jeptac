@@ -10,6 +10,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Gameplay")]
     public float standUpSpeed = 10;
+    public float launchDelaySpeed = 20;
     [Space(10)]
     public float speed = 1;
     public float rotationSpeed = 10;
@@ -93,26 +94,31 @@ public class PlayerController : MonoBehaviour
         //Make player stand up
         if (isGrounded)
         {
-            if (rb.velocity.magnitude <= 0.1f)
+            if (!isStanding)
             {
-                if (standingTimer <= 0) {
-                    standingTimer = 1;
-                    isStanding = true;
+                if (rb.velocity.magnitude <= 0.1f && rb.angularVelocity < 0.1f)
+                {
+                    if (standingTimer >= 1)
+                    {
+                        standingTimer = 0;
+                        isStanding = true;
 
-                    boxCol.size = new Vector2(boxCol.size.x, colliderStandingHeight);
-                    boxCol.offset = new Vector2(boxCol.offset.x, colliderStandingOffset);
+                        boxCol.size = new Vector2(boxCol.size.x, colliderStandingHeight);
+                        boxCol.offset = new Vector2(boxCol.offset.x, colliderStandingOffset);
+                    }
+                    else standingTimer += Time.deltaTime * standUpSpeed;
                 }
-                else standingTimer -= Time.deltaTime * standUpSpeed;
+                else standingTimer = 0;
             }
-            else standingTimer = 1;
         }
         else isStanding = false;
 
         if (isStanding)
         {
             transform.rotation = Quaternion.identity;
+            standingTimer += Time.deltaTime * standUpSpeed;
 
-            if (Input.GetKey(KeyCode.Space) && !shouldLaunch)
+            if (standingTimer >= 1 && Input.GetKey(KeyCode.Space) && !shouldLaunch)
             {
                 if (!isLaunching) //Using this instead of Input.GetKeyDown to prevent input not registering
                 {
