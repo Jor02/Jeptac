@@ -12,11 +12,16 @@ using UnityEngine.Playables;
 public class MenuScript : MonoBehaviour
 {
     public static MenuScript Instance;
+    public static bool isPaused = false;
 
     public GameObject player;
+    public Rigidbody2D playerRB;
     public AudioMixer mixer;
     public Animator settingsMenu;
     public PlayableDirector computerDirector;
+    public GameObject inGameMenu;
+    public GameObject inGameSettings;
+    public GameObject windows;
     [Space(10)]
     public Volume postProcessingVolume;
     public float focalLengthLerpSpeed = 10;
@@ -27,6 +32,8 @@ public class MenuScript : MonoBehaviour
     public Cinemachine.CinemachineVirtualCamera inGameVCam;
     [Space(10)]
     public CurSettings curSettings;
+
+    private bool gameStarted = false;
 
     private List<string> resolutionSettings;
     public List<string> ResolutionSettings
@@ -66,7 +73,7 @@ public class MenuScript : MonoBehaviour
     {
         Instance = this;
 
-        savePath = Path.Combine(Application.dataPath, "settings");
+        savePath = Path.Combine(Application.persistentDataPath, "settings");
         curSettings = new CurSettings();
 
 #if !UNITY_EDITOR
@@ -79,7 +86,6 @@ public class MenuScript : MonoBehaviour
 
         postProcessingVolume.sharedProfile.TryGet(out dof);
 
-#if !UNITY_EDITOR
         //Load settings from file
         if (File.Exists(savePath))
         {
@@ -89,9 +95,10 @@ public class MenuScript : MonoBehaviour
                 curSettings = (CurSettings)serializer.Deserialize(stream);
             }
         }
-#endif
 
         resolutions = Screen.resolutions;
+
+        CloseInGame();
     }
 
     private void Update()
@@ -101,6 +108,39 @@ public class MenuScript : MonoBehaviour
             lerpTime += Time.deltaTime * focalLengthLerpSpeed;
             dof.focalLength.value = Mathf.Lerp(prevFocalLength, curFocalLength, lerpTime);
         }
+
+        if (gameStarted && Input.GetKeyDown(KeyCode.Escape))
+        {
+            isPaused = !isPaused;
+
+            inGameMenu.SetActive(isPaused);
+            if (!isPaused) inGameSettings.SetActive(false);
+
+            if (isPaused)
+            {
+                Time.timeScale = 0;
+                
+                SaveGame();
+                SaveSettings();
+            } else
+            {
+                SaveSettings();
+                Time.timeScale = 1;
+            }
+        }
+    }
+
+    public void SaveGame()
+    {
+        UnityEngine.Debug.Log("Saving Game");
+
+        curSettings.PlayerPos = playerRB.transform.position;
+        curSettings.PlayerRot = playerRB.transform.rotation;
+        curSettings.PlayerVel = playerRB.velocity;
+        curSettings.PlayerAngularVel = playerRB.angularVelocity;
+        curSettings.hasSave = true;
+
+        SaveSettings();
     }
 
 #region Menu Buttons
@@ -114,6 +154,8 @@ public class MenuScript : MonoBehaviour
         curFocalLength = gameFocalLength;
 
         player.SetActive(true);
+
+        gameStarted = true;
     }
 
     public void StartGame()
@@ -121,16 +163,37 @@ public class MenuScript : MonoBehaviour
         SaveSettings();
         settingsMenu.SetBool("open", false);
 
+        InvokeRepeating("SaveGame", 0, 60);
+
         computerDirector.Play();
+    }
+
+    public void GoToMenu()
+    {
+        CancelInvoke();
+        UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
     }
 
     public void ContinueGame()
     {
         SaveSettings();
 
+        InvokeRepeating("SaveGame", 60, 60);
+
+        windows.SetActive(false);
+
+        playerRB.transform.position = curSettings.PlayerPos;
+        playerRB.transform.rotation = curSettings.PlayerRot;
+        playerRB.velocity = curSettings.PlayerVel;
+        playerRB.angularVelocity = curSettings.PlayerAngularVel;
+
         prevFocalLength = gameFocalLength;
         curFocalLength = gameFocalLength;
         lerpTime = 0;
+
+        player.SetActive(true);
+
+        gameStarted = true;
     }
 
     public void MenuSettings()
@@ -144,9 +207,25 @@ public class MenuScript : MonoBehaviour
         settingsMenu.SetBool("open", false);
     }
 
+    public void CloseInGame()
+    {
+        isPaused = false;
+
+        inGameMenu.SetActive(false);
+        inGameSettings.SetActive(false);
+
+        Time.timeScale = 1;
+    }
+
     public void InGameSettings()
     {
+        inGameSettings.SetActive(true);
+    }
 
+    public void InGameCloseSettings()
+    {
+        SaveSettings();
+        inGameSettings.SetActive(false);
     }
 
     public void QuitGame()
@@ -191,14 +270,12 @@ public class MenuScript : MonoBehaviour
 
     public void SaveSettings()
     {
-#if !UNITY_EDITOR
         //Save settings to file
         XmlSerializer serializer = new XmlSerializer(typeof(CurSettings));
         using (FileStream stream = new FileStream(savePath, FileMode.Create))
         {
             serializer.Serialize(stream, curSettings);
         }
-#endif
     }
 
     public FullScreenMode GetFullScreenMode(int index)
@@ -219,15 +296,22 @@ public class MenuScript : MonoBehaviour
     [System.Serializable]
     public class CurSettings
     {
+        //Video
         public int FullscreenMode = 2;
         public int Resolution = -1;
-        public bool hasSave = false;
-        public Vector3 PlayerPos = Vector3.zero;
-        public Quaternion PlayerRot = Quaternion.identity;
         public int Graphics = 2;
+
+        //Volume
         public float Master = 0;
         public float Player = 0;
         public float Ambience = 0;
+
+        //Game Save
+        public bool hasSave = false;
+        public Vector3 PlayerPos = Vector3.zero;
+        public Quaternion PlayerRot = Quaternion.identity;
+        public Vector3 PlayerVel = Vector3.zero;
+        public float PlayerAngularVel = 0;
     }
 #endregion
 }

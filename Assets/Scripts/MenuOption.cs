@@ -48,12 +48,12 @@ public class MenuOption : MonoBehaviour
 
     public enum SettingsOptions
     {
-        FullscreenMode,
-        Resolution,
-        Graphics,
-        Master,
-        Player,
-        Ambience,
-        Continue
+        FullscreenMode = 0,
+        Resolution = 1,
+        Graphics = 2,
+        Master = 3,
+        Player = 4,
+        Ambience = 5,
+        Continue = 6
     }
 }
