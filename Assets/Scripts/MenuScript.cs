@@ -69,10 +69,16 @@ public class MenuScript : MonoBehaviour
         savePath = Path.Combine(Application.dataPath, "settings");
         curSettings = new CurSettings();
 
+#if !UNITY_EDITOR
         prevFocalLength = menuFocalLength;
         curFocalLength = menuFocalLength;
+#else
+        prevFocalLength = gameFocalLength;
+        curFocalLength = gameFocalLength;
+#endif
 
         postProcessingVolume.sharedProfile.TryGet(out dof);
+
 #if !UNITY_EDITOR
         //Load settings from file
         if (File.Exists(savePath))
@@ -97,7 +103,7 @@ public class MenuScript : MonoBehaviour
         }
     }
 
-    #region Menu Buttons
+#region Menu Buttons
     public void IntroFinished()
     {
         menuVCam.m_Priority = 5;
@@ -223,5 +229,5 @@ public class MenuScript : MonoBehaviour
         public float Player = 0;
         public float Ambience = 0;
     }
-    #endregion
+#endregion
 }
