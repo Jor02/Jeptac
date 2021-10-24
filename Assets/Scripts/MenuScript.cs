@@ -14,6 +14,7 @@ public class MenuScript : MonoBehaviour
     public static MenuScript Instance;
     public static bool isPaused = false;
 
+    public Instructions instructions;
     public GameObject player;
     public Rigidbody2D playerRB;
     public AudioMixer mixer;
@@ -155,6 +156,8 @@ public class MenuScript : MonoBehaviour
 
         player.SetActive(true);
 
+        instructions.shouldTutorial = true;
+
         gameStarted = true;
     }
 
@@ -191,6 +194,7 @@ public class MenuScript : MonoBehaviour
         curFocalLength = gameFocalLength;
         lerpTime = 0;
 
+        menuVCam.enabled = false;
         player.SetActive(true);
 
         gameStarted = true;

@@ -68,7 +68,7 @@ public class PlayerController : MonoBehaviour
     private ContactFilter2D contactFilter = new ContactFilter2D();
 
     private float standingTimer = 1;
-    private float pathLengthTimer = 1;
+    [HideInInspector]public float pathLengthTimer = 1;
 
     private float pathTimer = 0;
     private List<Vector3> targetPath = new List<Vector3>();
@@ -336,6 +336,16 @@ public class PlayerController : MonoBehaviour
             smokeEffect.Destroy();
             smokeEffect = null;
         }
+    }
+
+    public void SetStanding()
+    {
+        isStanding = false;
+        isGrounded = false;
+        isLaunching = false;
+        shouldLaunch = false;
+        shouldFollowPath = false;
+        standingTimer = 0.5f;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
