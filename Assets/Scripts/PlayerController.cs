@@ -62,6 +62,8 @@ public class PlayerController : MonoBehaviour
     private bool isLaunching;
     private bool shouldLaunch = false;
 
+    private bool standingOnRigidBody = false;
+
     private Vector3 pathStartPos;
     private Vector3 launchStartPos;
 
@@ -96,7 +98,9 @@ public class PlayerController : MonoBehaviour
         {
             if (!isStanding)
             {
-                if (rb.velocity.magnitude <= 0.1f && rb.angularVelocity < 0.1f)
+                float magnitute = standingOnRigidBody ? 15f : 0.1f;
+                float angularMag = standingOnRigidBody ? 10f: 0.1f;
+                if (rb.velocity.magnitude <= magnitute && rb.angularVelocity < angularMag)
                 {
                     if (standingTimer >= 1)
                     {
@@ -287,7 +291,9 @@ public class PlayerController : MonoBehaviour
 
     void CheckGrounded()
     {
-        isGrounded = shouldFollowPath ? false : boxCol.Cast(Vector3.down, contactFilter, new RaycastHit2D[1], 0.03f) > 0;
+        RaycastHit2D[] hit = new RaycastHit2D[1];
+        isGrounded = shouldFollowPath ? false : boxCol.Cast(Vector3.down, contactFilter, hit, 0.08f) > 0;
+        standingOnRigidBody = isGrounded ? hit[0].rigidbody != null : false;
     }
 
     void SetAnims()
