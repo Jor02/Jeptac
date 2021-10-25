@@ -119,7 +119,9 @@ public class PlayerController : MonoBehaviour
 
         if (isStanding)
         {
-            transform.rotation = Quaternion.identity;
+            if (!SpaceTrigger.isSpace) transform.rotation = Quaternion.identity;
+            else transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(SpaceTrigger.gravityDir.y, SpaceTrigger.gravityDir.x) * Mathf.Rad2Deg + 90);
+
             standingTimer += Time.deltaTime * standUpSpeed;
 
             if (standingTimer >= 1 && Input.GetKey(KeyCode.Space) && !shouldLaunch)
@@ -194,7 +196,15 @@ public class PlayerController : MonoBehaviour
             //Rotate to next point
             transform.rotation = Quaternion.Euler(0, 0, nextAngle - 90);
         }
-        else lineSimulationSpace.position = transform.position;
+        else
+        {
+            lineSimulationSpace.position = transform.position;
+
+            if (SpaceTrigger.isSpace && !isGrounded)
+            {
+                transform.rotation = Quaternion.Euler(0, 0, Mathf.Lerp(transform.eulerAngles.z, Mathf.Atan2(SpaceTrigger.gravityDir.y, SpaceTrigger.gravityDir.x) * Mathf.Rad2Deg + 90, Time.deltaTime * rotationSpeed));
+            }
+        }
 
         SetAnims();
     }
@@ -292,7 +302,8 @@ public class PlayerController : MonoBehaviour
     void CheckGrounded()
     {
         RaycastHit2D[] hit = new RaycastHit2D[1];
-        isGrounded = shouldFollowPath ? false : boxCol.Cast(Vector3.down, contactFilter, hit, 0.08f) > 0;
+        if (!SpaceTrigger.isSpace) isGrounded = shouldFollowPath ? false : boxCol.Cast(Vector3.down, contactFilter, hit, 0.08f) > 0;
+        else isGrounded = shouldFollowPath ? false : boxCol.Cast(SpaceTrigger.gravityDir, contactFilter, hit, 0.08f) > 0;
         standingOnRigidBody = isGrounded ? hit[0].rigidbody != null : false;
     }
 
