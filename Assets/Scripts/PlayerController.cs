@@ -202,7 +202,7 @@ public class PlayerController : MonoBehaviour
 
             if (SpaceTrigger.isSpace && !isGrounded)
             {
-                transform.rotation = Quaternion.Euler(0, 0, Mathf.Lerp(transform.eulerAngles.z, Mathf.Atan2(SpaceTrigger.gravityDir.y, SpaceTrigger.gravityDir.x) * Mathf.Rad2Deg + 90, Time.deltaTime * rotationSpeed));
+                transform.rotation = Quaternion.Euler(0, 0, Mathf.Lerp(transform.eulerAngles.z, Mathf.Atan2(SpaceTrigger.gravityDir.y, SpaceTrigger.gravityDir.x) * Mathf.Rad2Deg + 90, Time.deltaTime));
             }
         }
 
