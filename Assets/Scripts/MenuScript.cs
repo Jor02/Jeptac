@@ -105,6 +105,11 @@ public class MenuScript : MonoBehaviour
         CloseInGame();
     }
 
+    private void OnApplicationFocus(bool focus)
+    {
+        Cursor.visible = isPaused;
+    }
+
     public void AddLaunched()
     {
         curSettings.launches++;
@@ -131,6 +136,7 @@ public class MenuScript : MonoBehaviour
 
             inGameMenu.SetActive(isPaused);
             if (!isPaused) inGameSettings.SetActive(false);
+            Cursor.visible = isPaused;
 
             if (isPaused)
             {
@@ -186,6 +192,8 @@ public class MenuScript : MonoBehaviour
         InvokeRepeating("SaveGame", 0, 60);
 
         computerDirector.Play();
+
+        Cursor.visible = false;
     }
 
     public void GoToMenu()
@@ -215,6 +223,7 @@ public class MenuScript : MonoBehaviour
         player.SetActive(true);
 
         gameStarted = true;
+        Cursor.visible = false;
     }
 
     public void MenuSettings()
@@ -236,6 +245,8 @@ public class MenuScript : MonoBehaviour
         inGameSettings.SetActive(false);
 
         Time.timeScale = 1;
+
+        Cursor.visible = true;
     }
 
     public void InGameSettings()
