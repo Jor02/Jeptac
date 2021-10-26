@@ -14,6 +14,9 @@ public class MenuScript : MonoBehaviour
     public static MenuScript Instance;
     public static bool isPaused = false;
 
+    public static float gameTime = 0;
+    public static int launches = 0;
+
     public Instructions instructions;
     public GameObject player;
     public Rigidbody2D playerRB;
@@ -102,6 +105,18 @@ public class MenuScript : MonoBehaviour
         CloseInGame();
     }
 
+    public void AddLaunched()
+    {
+        curSettings.launches++;
+    }
+
+    public void StopGame()
+    {
+        gameStarted = false;
+        gameTime = curSettings.gameTime;
+        launches = curSettings.launches;
+    }
+
     private void Update()
     {
         if (lerpTime < 1 && dof != null)
@@ -129,6 +144,8 @@ public class MenuScript : MonoBehaviour
                 Time.timeScale = 1;
             }
         }
+
+        curSettings.gameTime += Time.deltaTime;
     }
 
     public void SaveGame()
@@ -316,6 +333,9 @@ public class MenuScript : MonoBehaviour
         public Quaternion PlayerRot = Quaternion.identity;
         public Vector3 PlayerVel = Vector3.zero;
         public float PlayerAngularVel = 0;
+
+        public float gameTime = 0;
+        public int launches = 0;
     }
 #endregion
 }
