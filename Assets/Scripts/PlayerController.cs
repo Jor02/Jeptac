@@ -296,6 +296,8 @@ public class PlayerController : MonoBehaviour
         pathDrawer.StopCurve();
 
         cameraShake.StopShake();
+
+        MenuScript.Instance.AddLaunched();
     }
     #endregion
 
