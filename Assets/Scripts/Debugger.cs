@@ -6,6 +6,8 @@ using UnityEngine;
 public class Debugger : MonoBehaviour
 {
 #if UNITY_EDITOR
+    [Range(0,1)]
+    public float timeScale = 1;
     new public bool enabled;
     public bool continueGame;
     public GameObject[] toggle;
@@ -21,6 +23,11 @@ public class Debugger : MonoBehaviour
             }
         if (continueGame)
             MenuScript.Instance.ContinueGame();
+    }
+
+    private void Update()
+    {
+        Time.timeScale = timeScale;
     }
 
     private void OnDrawGizmos()
