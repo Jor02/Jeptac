@@ -9,7 +9,6 @@ public class Win : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             MenuScript.Instance.StopGame();
-            MenuScript.Instance.curSettings.hasSave = false;
             UnityEngine.SceneManagement.SceneManager.LoadScene(1);
         }
     }

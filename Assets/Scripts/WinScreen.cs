@@ -11,8 +11,10 @@ public class WinScreen : MonoBehaviour
     private void Awake()
     {
         System.TimeSpan timeSpan = System.TimeSpan.FromSeconds(MenuScript.gameTime);
-        time.text = timeSpan.ToString(@"mm\:ss\.fff");
+        time.text = timeSpan.ToString(@"h\:mm\:ss\.fff");
         jumps.text = MenuScript.launches + " LAUNCHES";
+
+        Cursor.visible = true;
     }
 
     public void Exit() => UnityEngine.SceneManagement.SceneManager.LoadScene(0);

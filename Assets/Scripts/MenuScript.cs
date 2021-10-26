@@ -103,6 +103,9 @@ public class MenuScript : MonoBehaviour
         resolutions = Screen.resolutions;
 
         CloseInGame();
+
+        isPaused = true;
+        Cursor.visible = true;
     }
 
     private void OnApplicationFocus(bool focus)
@@ -120,6 +123,9 @@ public class MenuScript : MonoBehaviour
         gameStarted = false;
         gameTime = curSettings.gameTime;
         launches = curSettings.launches;
+
+        curSettings.hasSave = false;
+        SaveSettings();
     }
 
     private void Update()
@@ -156,7 +162,7 @@ public class MenuScript : MonoBehaviour
 
     public void SaveGame()
     {
-        UnityEngine.Debug.Log("Saving Game");
+        Debug.Log("Saving Game");
 
         curSettings.PlayerPos = playerRB.transform.position;
         curSettings.PlayerRot = playerRB.transform.rotation;
@@ -186,13 +192,18 @@ public class MenuScript : MonoBehaviour
 
     public void StartGame()
     {
+        curSettings.gameTime = 0;
+        curSettings.gameTime = 0;
+        curSettings.launches = 0;
         SaveSettings();
-        settingsMenu.SetBool("open", false);
 
+        settingsMenu.SetBool("open", false);
         InvokeRepeating("SaveGame", 0, 60);
 
         computerDirector.Play();
 
+
+        isPaused = false;
         Cursor.visible = false;
     }
 
@@ -222,6 +233,7 @@ public class MenuScript : MonoBehaviour
         menuVCam.enabled = false;
         player.SetActive(true);
 
+        isPaused = false;
         gameStarted = true;
         Cursor.visible = false;
     }
