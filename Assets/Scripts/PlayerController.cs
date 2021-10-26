@@ -26,6 +26,7 @@ public class PlayerController : MonoBehaviour
     public Vector3 pathStartOffset;
     [Space(5)]
     public LayerMask groundMask;
+    public LayerMask pathDrawerMask;
 
     [Header("Collider")]
     public float colliderFallingHeight = 0.47f;
@@ -68,6 +69,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 launchStartPos;
 
     private ContactFilter2D contactFilter = new ContactFilter2D();
+    private ContactFilter2D pathContactFilter = new ContactFilter2D();
 
     private float standingTimer = 1;
     [HideInInspector]public float pathLengthTimer = 1;
@@ -87,6 +89,7 @@ public class PlayerController : MonoBehaviour
         boxCol = GetComponent<BoxCollider2D>();
 
         contactFilter.SetLayerMask(groundMask);
+        pathContactFilter.SetLayerMask(pathDrawerMask);
     }
 
     void Update()
@@ -262,7 +265,7 @@ public class PlayerController : MonoBehaviour
             targetPath.Add(pathDrawer.transform.position - pathStartPos);
         }
 
-        if (pathLengthTimer <= 0 || pathDrawerCol.Cast(pathDrawer.transform.up, contactFilter, new RaycastHit2D[1], 0.03f) > 0)
+        if (pathLengthTimer <= 0 || pathDrawerCol.Cast(pathDrawer.transform.up, pathContactFilter, new RaycastHit2D[1], 0.03f) > 0)
         {
             shouldLaunch = true;
         }
